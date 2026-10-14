@@ -1,20 +1,31 @@
-import { useEffect, useState } from "react";
-import { MapTrail } from "./components/MapTrail";
-import { TodayPanel } from "./components/TodayPanel";
+import { useEffect, useMemo, useState } from "react";
+import { SidePanel } from "./components/SidePanel";
+import { WorldMap } from "./components/WorldMap";
 import {
+  applyFight,
+  buySkill,
+  claimHunt,
+  equipArmor,
   equipWeapon,
+  getReachable,
+  grantSteps,
+  hireMerc,
   loadState,
+  moveTo,
+  nextDay,
+  openChest,
   resetGame,
-  resolveToday,
+  respecSkills,
   saveState,
-  setSimulatedSteps,
-  startNextScout,
+  selectSpawn,
+  setSteps,
 } from "./game/state";
-import type { GameState, WeaponId } from "./game/types";
+import type { GameState } from "./game/types";
 import "./App.css";
 
 export default function App() {
   const [state, setState] = useState<GameState>(() => loadState());
+  const reachable = useMemo(() => getReachable(state), [state]);
 
   useEffect(() => {
     saveState(state);
@@ -22,14 +33,27 @@ export default function App() {
 
   return (
     <div className="app">
-      <MapTrail state={state} />
-      <TodayPanel
+      <WorldMap
         state={state}
-        onStepsChange={(steps) => setState((s) => setSimulatedSteps(s, steps))}
-        onResolve={() => setState((s) => resolveToday(s))}
+        reachable={reachable}
+        onTravel={(id) => setState((s) => moveTo(s, id))}
+        onSelectSpawn={(id) => setState((s) => selectSpawn(s, id))}
+      />
+      <SidePanel
+        state={state}
+        onFight={(id, mode) => setState((s) => applyFight(s, id, mode))}
+        onSelectSpawn={(id) => setState((s) => selectSpawn(s, id))}
+        onOpenChest={(id) => setState((s) => openChest(s, id))}
+        onHire={(id) => setState((s) => hireMerc(s, id))}
+        onClaimHunt={() => setState((s) => claimHunt(s))}
+        onBuySkill={(id) => setState((s) => buySkill(s, id))}
+        onRespec={() => setState((s) => respecSkills(s))}
+        onEquipWeapon={(id) => setState((s) => equipWeapon(s, id))}
+        onEquipArmor={(id) => setState((s) => equipArmor(s, id))}
+        onSetSteps={(n) => setState((s) => setSteps(s, n))}
+        onGrantSteps={(n) => setState((s) => grantSteps(s, n))}
+        onNextDay={() => setState((s) => nextDay(s))}
         onReset={() => setState(resetGame())}
-        onNextScout={() => setState((s) => startNextScout(s))}
-        onEquip={(id: WeaponId) => setState((s) => equipWeapon(s, id))}
       />
     </div>
   );
