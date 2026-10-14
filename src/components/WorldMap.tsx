@@ -156,8 +156,8 @@ export function WorldMap({
         </g>
       </svg>
       <p className="world-map__hint">
-        Gold rings = reachable with your steps. Red dots = monsters. Diamonds on
-        ambush roads can force a fight (flee is free).
+        Gold rings = adjacent paths you can afford. Travel one fork at a time.
+        Red dots = monsters. Ambush nodes may force a fight (flee is free).
       </p>
     </section>
   );

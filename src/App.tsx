@@ -7,7 +7,7 @@ import {
   claimHunt,
   equipArmor,
   equipWeapon,
-  getReachable,
+  getTravelOptions,
   grantSteps,
   hireMerc,
   loadState,
@@ -25,7 +25,7 @@ import "./App.css";
 
 export default function App() {
   const [state, setState] = useState<GameState>(() => loadState());
-  const reachable = useMemo(() => getReachable(state), [state]);
+  const reachable = useMemo(() => getTravelOptions(state), [state]);
 
   useEffect(() => {
     saveState(state);

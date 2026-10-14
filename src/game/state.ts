@@ -11,7 +11,12 @@ import {
   WEAPONS,
 } from "./content";
 import { resolveFight } from "./combat";
-import { edgeCostBetween, nodeById, reachableFrom } from "./mapGraph";
+import {
+  edgeCostBetween,
+  neighbors,
+  nodeById,
+  reachableFrom,
+} from "./mapGraph";
 import { mulberry32, pick, randInt } from "./rng";
 import { skillRank, totalsFromSkills } from "./skills";
 import type {
@@ -175,6 +180,7 @@ export function getMoveDiscount(state: GameState): number {
   return totalsFromSkills(state).moveDiscount;
 }
 
+/** All nodes within step budget (for hinting). */
 export function getReachable(state: GameState) {
   return reachableFrom(
     state.currentNodeId,
@@ -183,13 +189,28 @@ export function getReachable(state: GameState) {
   );
 }
 
+/**
+ * Only immediate neighbors you can afford — scenic path clicks step node-to-node
+ * so towns / ambushes are never skipped by multi-hop travel.
+ */
+export function getTravelOptions(state: GameState) {
+  const discount = getMoveDiscount(state);
+  const options = new Map<string, { cost: number }>();
+  for (const n of neighbors(state.currentNodeId)) {
+    const cost = edgeCostBetween(state.currentNodeId, n.id, discount);
+    if (cost != null && cost <= state.stepsRemaining) {
+      options.set(n.id, { cost });
+    }
+  }
+  return options;
+}
+
 export function moveTo(state: GameState, nodeId: string): GameState {
   if (state.pendingAmbushSpawnId) return state;
-  const reach = getReachable(state);
-  const info = reach.get(nodeId);
+  const options = getTravelOptions(state);
+  const info = options.get(nodeId);
   if (!info) return state;
 
-  // Spend exact edge hops along path: use Dijkstra cost
   let next: GameState = {
     ...state,
     currentNodeId: nodeId,
