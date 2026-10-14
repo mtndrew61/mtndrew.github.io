@@ -1,25 +1,20 @@
-# Step Quest (Phase 0)
+# Step Quest (web demo)
 
-Walk a legally distinct, Middle-earth–inspired wilderness. Real-world steps (simulated in Phase 0) advance your route and damage foes. Miss a daily mark and half the shortfall becomes tomorrow’s debt.
+Explore a legally distinct, Middle-earth–inspired wilderness. **Steps** are your movement budget along scenic path forks — and the damage you spend when you click a monster.
 
-## Locked defaults
+## Locked design
 
-- Solo campaign, whimsical-with-teeth tone
-- Adaptive daily base goal from 7-day average (clamped 5k–12k)
-- Surplus clears debt, then **25%** banks into the next fight
-- Debt capped at **1×** base goal
-- Multi-day bosses planned for later chapters (trolls/wraiths)
-- Illustrated 2D map; Expo/HealthKit planned for Phase 2
+- Click along scenic paths / forks (¾ illustrated map)
+- Daily **hunt quest** (no harsh debt)
+- Instant combat resolve; **elites** keep HP across days
+- Bypass monsters; **ambush** tiles can force a fight (flee is free)
+- Hybrid **melee / archer / rogue / mage** skills + town respec
+- **1 mercenary** for a few fights
+- Longer explore when you have more steps
+- Can’t afford a fight → flee (no penalty) or chip; HP 0 → last town
+- Short demo, **web first** (Apple Health later)
 
-## Phase 0 scope
-
-- Static biome route map + traveler pin
-- One **Goblin Scout** encounter (4,000 HP)
-- Fake step slider (stand-in for Apple Health)
-- Debt / surplus / weapon multiplier resolve math
-- Walking Stick → Iron Blade loot on first victory
-
-## Develop
+## Run
 
 ```bash
 npm install
@@ -28,4 +23,4 @@ npm test
 npm run build
 ```
 
-Open the local Vite URL. Use the slider to set steps, then **End day & resolve**.
+Use the step slider / **+2,000 steps** to simulate Health. Travel by clicking gold-ringed nodes. Click red spawns to fight. Visit **Briarhaven** to hire mercs, claim the hunt, and respec.

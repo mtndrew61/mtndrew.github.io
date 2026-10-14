@@ -1,79 +1,172 @@
-export type EnemyId = "goblin-scout";
-
-export type WeaponId = "walking-stick" | "iron-blade" | "rune-spear";
-
 export type BiomeId =
   | "forest"
-  | "mountain"
-  | "river"
   | "valley"
-  | "volcano"
+  | "river"
+  | "mountain"
   | "marsh"
-  | "cave"
-  | "plains";
+  | "town";
+
+export type NodeKind = "path" | "fork" | "town" | "ambush" | "landmark";
+
+export type EnemyTier = 1 | 2 | 3 | 4;
+
+export type SkillTree = "melee" | "archer" | "rogue" | "mage";
+
+export type WeaponId =
+  | "walking-stick"
+  | "iron-blade"
+  | "thorn-bow"
+  | "ash-wand"
+  | "rune-spear";
+
+export type ArmorId =
+  | "travel-cloak"
+  | "leather-jerkin"
+  | "iron-mail"
+  | "ward-weave";
+
+export type MercId = "briar-scout" | "stone-shield";
+
+export interface MapNode {
+  id: string;
+  name: string;
+  kind: NodeKind;
+  biome: BiomeId;
+  /** 3/4 map coordinates in viewBox space */
+  x: number;
+  y: number;
+  /** Optional flavor */
+  blurb?: string;
+}
+
+export interface MapEdge {
+  from: string;
+  to: string;
+  /** Step cost to traverse */
+  cost: number;
+}
+
+export interface EnemyTemplate {
+  id: string;
+  name: string;
+  tier: EnemyTier;
+  baseHp: number;
+  /** Damage to player if fight is not a clean one-shot */
+  touchDamage: number;
+  goldMin: number;
+  goldMax: number;
+  biomes: BiomeId[];
+  elite?: boolean;
+  blurb: string;
+}
+
+export interface Spawn {
+  id: string;
+  templateId: string;
+  nodeId: string;
+  hp: number;
+  maxHp: number;
+  elite: boolean;
+}
 
 export interface Weapon {
   id: WeaponId;
   name: string;
-  /** Multiplier applied to steps dealt as damage. */
   damageMult: number;
   blurb: string;
+  goldValue: number;
 }
 
-export interface Enemy {
-  id: EnemyId;
+export interface Armor {
+  id: ArmorId;
   name: string;
-  tier: number;
-  baseHp: number;
-  biome: BiomeId;
+  /** Reduces incoming touch damage */
+  mitigation: number;
+  blurb: string;
+  goldValue: number;
+}
+
+export interface Merc {
+  id: MercId;
+  name: string;
+  /** Flat fraction of fight step cost removed */
+  stepReduction: number;
+  hireGold: number;
+  fights: number;
   blurb: string;
 }
 
-export interface Biome {
-  id: BiomeId;
+export interface SkillDef {
+  id: string;
+  tree: SkillTree;
   name: string;
-  /** 0–1 start along the full route */
-  start: number;
-  /** 0–1 end along the full route */
-  end: number;
-  fill: string;
+  maxRank: number;
+  /** Short effect text */
+  blurb: string;
+  /** Per-rank effects interpreted in combat/move */
+  effect: SkillEffect;
 }
 
-export interface DayLog {
-  date: string;
-  baseGoal: number;
-  debtIn: number;
-  target: number;
-  steps: number;
-  damageDealt: number;
-  enemyHpBefore: number;
-  enemyHpAfter: number;
-  debtOut: number;
-  bankedOut: number;
-  outcome: "victory" | "ongoing" | "shortfall";
-  lootGained: WeaponId | null;
+export type SkillEffect =
+  | { kind: "damageMult"; perRank: number }
+  | { kind: "mitigation"; perRank: number }
+  | { kind: "moveDiscount"; perRank: number }
+  | { kind: "goldFind"; perRank: number }
+  | { kind: "critChance"; perRank: number }
+  | { kind: "burstFlat"; perRank: number };
+
+export interface HuntQuest {
+  title: string;
+  targetKills: number;
+  progress: number;
+  rewardGold: number;
+  completed: boolean;
+  claimed: boolean;
+}
+
+export interface Chest {
+  id: string;
+  nodeId: string;
+  opened: boolean;
+  gold: number;
+  weaponId?: WeaponId;
+  armorId?: ArmorId;
+}
+
+export interface ActiveMerc {
+  id: MercId;
+  fightsLeft: number;
+}
+
+export interface DayLogLine {
+  text: string;
+  at: string;
 }
 
 export interface GameState {
-  /** ISO date of the simulated "today" */
-  today: string;
-  /** Recent day step totals for adaptive goal (oldest → newest) */
-  recentSteps: number[];
-  debt: number;
-  /** Banked surplus applied as free damage on the next resolve */
-  bankedDamage: number;
-  enemyId: EnemyId;
-  enemyHp: number;
-  enemyMaxHp: number;
+  day: string;
+  stepsRemaining: number;
+  stepsGranted: number;
+  gold: number;
+  hp: number;
+  maxHp: number;
+  currentNodeId: string;
+  checkpointNodeId: string;
   weaponId: WeaponId;
+  armorId: ArmorId;
   unlockedWeapons: WeaponId[];
-  /** 0–1 progress along the full campaign route when not in combat gate */
-  routeProgress: number;
-  /** Whether the current foe still blocks the road */
-  inEncounter: boolean;
-  chapterTitle: string;
-  journal: string[];
-  history: DayLog[];
-  /** Prototype: allow scrubbing steps without HealthKit */
-  simulatedSteps: number;
+  unlockedArmor: ArmorId[];
+  skillPoints: number;
+  skills: Record<string, number>;
+  merc: ActiveMerc | null;
+  spawns: Spawn[];
+  chests: Chest[];
+  hunt: HuntQuest;
+  journal: DayLogLine[];
+  /** Forced encounter spawn id (ambush) */
+  pendingAmbushSpawnId: string | null;
+  /** Selected spawn for combat UI */
+  selectedSpawnId: string | null;
+  demoComplete: boolean;
+  seed: number;
 }
