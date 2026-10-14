@@ -77,7 +77,7 @@ export function createInitialState(seed = Date.now() % 1_000_000): GameState {
     day: todayIso(),
     stepsRemaining: DEFAULT_STEPS,
     stepsGranted: DEFAULT_STEPS,
-    gold: 20,
+    gold: 55,
     hp: PLAYER_MAX_HP,
     maxHp: PLAYER_MAX_HP,
     currentNodeId: "gate",

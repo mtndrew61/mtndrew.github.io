@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState, getTravelOptions, moveTo } from "./state";
+import {
+  createInitialState,
+  getTravelOptions,
+  moveTo,
+  nextDay,
+} from "./state";
 
 describe("adjacent travel", () => {
   it("only offers neighbor nodes", () => {
@@ -21,4 +26,18 @@ describe("adjacent travel", () => {
     expect(state.currentNodeId).toBe("town-briar");
     expect(state.checkpointNodeId).toBe("town-briar");
   });
+
+  it("can leave town after next day", () => {
+    let state = {
+      ...createInitialState(12),
+      currentNodeId: "town-briar",
+      checkpointNodeId: "town-briar",
+      stepsRemaining: 100,
+    };
+    state = nextDay(state);
+    const opts = getTravelOptions(state);
+    expect(state.stepsRemaining).toBeGreaterThan(1000);
+    expect(opts.has("river-ford") || opts.has("fork-ridge")).toBe(true);
+  });
 });
+
