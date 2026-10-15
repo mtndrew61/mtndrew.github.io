@@ -1,26 +1,40 @@
-# Step Quest (web demo)
+# Fitness Tracker
 
-Explore a legally distinct, Middle-earth–inspired wilderness. **Steps** are your movement budget along scenic path forks — and the damage you spend when you click a monster.
+A Next.js app where you log a workout (what you did and for how long), then an AI estimates how many calories you burned via the OpenAI API.
 
-## Locked design
+## Stack
 
-- Click along scenic paths / forks (¾ illustrated map)
-- Daily **hunt quest** (no harsh debt)
-- Instant combat resolve; **elites** keep HP across days
-- Bypass monsters; **ambush** tiles can force a fight (flee is free)
-- Hybrid **melee / archer / rogue / mage** skills + town respec
-- **1 mercenary** for a few fights
-- Longer explore when you have more steps
-- Can’t afford a fight → flee (no penalty) or chip; HP 0 → last town
-- Short demo, **web first** (Apple Health later)
+- **Next.js** (App Router) — React framework with server routes for the API
+- **TypeScript** — typed JavaScript
+- **Tailwind CSS** — utility-first styling
+- **OpenAI API** — calorie estimation (coming in a later step)
 
-## Run
+## Getting started
 
 ```bash
 npm install
 npm run dev
-npm test
-npm run build
 ```
 
-Use the step slider / **+2,000 steps** to simulate Health. Travel by clicking gold-ringed nodes. Click red spawns to fight. Visit **Briarhaven** to hire mercs, claim the hunt, and respec.
+Open [http://localhost:3000](http://localhost:3000).
+
+## Build plan (step by step)
+
+1. **Scaffold Next.js project** ← you are here
+2. Workout input UI (description + duration)
+3. API route that calls OpenAI for calorie estimates
+4. Wire the form to the API and show results
+5. Optional: save workout history
+
+## Environment variables
+
+Copy `.env.example` to `.env.local` when we add OpenAI (Step 3):
+
+```bash
+cp .env.example .env.local
+```
+
+## Deploy (Vercel)
+
+`vercel.json` forces the **Next.js** framework preset and `next build`, so preview
+deploys do not keep using the old Vite/`dist` settings from earlier projects.
