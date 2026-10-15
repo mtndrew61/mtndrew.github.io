@@ -33,3 +33,8 @@ Copy `.env.example` to `.env.local` when we add OpenAI (Step 3):
 ```bash
 cp .env.example .env.local
 ```
+
+## Deploy (Vercel)
+
+`vercel.json` forces the **Next.js** framework preset and `next build`, so preview
+deploys do not keep using the old Vite/`dist` settings from earlier projects.
