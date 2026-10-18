@@ -239,10 +239,6 @@ export function WorldMap({
         </g>
       </svg>
       <p className="world-map__caption">{atmo.label}</p>
-      <p className="world-map__hint">
-        Walk onto a node to engage its foes (proximity). Pulsing rings = in
-        range. Dim dots = too far. Ambush tiles can force a battle.
-      </p>
     </section>
   );
 }
