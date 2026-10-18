@@ -1,1 +1,2 @@
-*.html filter=lfs diff=lfs merge=lfs -text
+# Keep binary assets in LFS if needed later; HTML must stay as normal git text
+# so Vercel/GitHub Pages can serve the real index.html (not an LFS pointer).

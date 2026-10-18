@@ -157,6 +157,8 @@ export interface GameState {
   unlockedWeapons: WeaponId[];
   unlockedArmor: ArmorId[];
   skillPoints: number;
+  /** Total skill points ever earned (for Traveler Rank). */
+  skillPointsEarned: number;
   skills: Record<string, number>;
   merc: ActiveMerc | null;
   spawns: Spawn[];

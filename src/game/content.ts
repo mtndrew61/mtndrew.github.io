@@ -8,7 +8,7 @@ import type {
   Weapon,
 } from "./types";
 
-export const STORAGE_KEY = "step-quest-demo-v2";
+export const STORAGE_KEY = "step-quest-demo-v3";
 
 export const PLAYER_MAX_HP = 100;
 export const DEFAULT_STEPS = 8000;
@@ -269,7 +269,7 @@ export const MERCS: Record<string, Merc> = {
     stepReduction: 0.18,
     hireGold: 40,
     fights: MERC_FIGHTS,
-    blurb: "Cuts 18% off fight step cost for 3 fights.",
+    blurb: "Eases strike stamina ~18% for 3 fights.",
   },
   "stone-shield": {
     id: "stone-shield",
@@ -277,7 +277,7 @@ export const MERCS: Record<string, Merc> = {
     stepReduction: 0.12,
     hireGold: 35,
     fights: MERC_FIGHTS,
-    blurb: "Sturdier ally; softer step discount.",
+    blurb: "Softer stamina ease; still helps every swing.",
   },
 };
 
@@ -363,4 +363,103 @@ export const BIOME_FILL: Record<string, string> = {
   mountain: "#5a6570",
   marsh: "#3a5240",
   town: "#8a6a3a",
+};
+
+export type PathTag = "danger" | "loot" | "town" | "scenic" | "elite";
+
+/** Rumors shown at forks / when inspecting an outgoing path. */
+export interface PathRumor {
+  from: string;
+  to: string;
+  title: string;
+  rumor: string;
+  tags: PathTag[];
+}
+
+export const PATH_RUMORS: PathRumor[] = [
+  {
+    from: "fork-ash",
+    to: "ambush-roots",
+    title: "Rootshadow cut",
+    rumor: "Quiet trail under black oaks. Scouts say something waits in the roots.",
+    tags: ["danger", "loot"],
+  },
+  {
+    from: "fork-ash",
+    to: "vale",
+    title: "Hollowmere meadows",
+    rumor: "Open grass and clean wind. Safer footing, fewer purses.",
+    tags: ["scenic"],
+  },
+  {
+    from: "fork-ash",
+    to: "mire-edge",
+    title: "Blackfen margin",
+    rumor: "Soft ground and fen-lights. Harder walking, stranger gold.",
+    tags: ["danger"],
+  },
+  {
+    from: "fork-ridge",
+    to: "ambush-pass",
+    title: "Toothpass shale",
+    rumor: "Short climb, bad company. Ambush likely — flee if you’re thin on steps.",
+    tags: ["danger", "elite"],
+  },
+  {
+    from: "fork-ridge",
+    to: "peak",
+    title: "High overlook road",
+    rumor: "Longer, windier, ends at the demo’s far marker. Elites remember bruises.",
+    tags: ["scenic", "elite"],
+  },
+  {
+    from: "river-ford",
+    to: "town-briar",
+    title: "Road to Briarhaven",
+    rumor: "Warm hearths, hired steel, skill trainers. Checkpoint waits.",
+    tags: ["town"],
+  },
+  {
+    from: "chest-glade",
+    to: "town-briar",
+    title: "Fern road to town",
+    rumor: "Longer haul after the glade — but Briarhaven’s gates open the same.",
+    tags: ["town", "scenic"],
+  },
+];
+
+export const BIOME_ATMO: Record<
+  string,
+  { sky: [string, string]; ground: [string, string]; label: string }
+> = {
+  forest: {
+    sky: ["#9ebba0", "#5f8a68"],
+    ground: ["#6f9174", "#2a4533"],
+    label: "Whisperwood canopy",
+  },
+  valley: {
+    sky: ["#c5d6b0", "#7a9a6a"],
+    ground: ["#8aa86e", "#4a6a48"],
+    label: "Hollowmere light",
+  },
+  river: {
+    sky: ["#a8c4c8", "#5a8a92"],
+    ground: ["#6a9aa0", "#2f555c"],
+    label: "Silverrun mist",
+  },
+  marsh: {
+    sky: ["#8a9a88", "#4a5a48"],
+    ground: ["#4a5c4c", "#243028"],
+    label: "Blackfen gloom",
+  },
+  mountain: {
+    sky: ["#b0b8c0", "#6a7480"],
+    ground: ["#7a8490", "#3a4048"],
+    label: "Ironspine wind",
+  },
+  town: {
+    sky: ["#d4c4a0", "#9a7a48"],
+    ground: ["#a88858", "#5a4030"],
+    label: "Briarhaven hearth-glow",
+  },
 };

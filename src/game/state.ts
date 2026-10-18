@@ -87,6 +87,7 @@ export function createInitialState(seed = Date.now() % 1_000_000): GameState {
     unlockedWeapons: ["walking-stick"],
     unlockedArmor: ["travel-cloak"],
     skillPoints: 3,
+    skillPointsEarned: 3,
     skills: {},
     merc: null,
     spawns: [],
@@ -112,6 +113,13 @@ export function loadState(): GameState {
     if (!raw) return createInitialState();
     const parsed = JSON.parse(raw) as GameState;
     if (!parsed?.currentNodeId || !parsed.spawns) return createInitialState();
+    if (parsed.skillPointsEarned == null) {
+      const spent = Object.values(parsed.skills ?? {}).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      parsed.skillPointsEarned = spent + (parsed.skillPoints ?? 0);
+    }
     return parsed;
   } catch {
     return createInitialState();
@@ -243,7 +251,7 @@ export function moveTo(state: GameState, nodeId: string): GameState {
       };
       next = log(
         next,
-        `Ambush! A ${ENEMIES[spawn.templateId].name} bars the footing — fight, chip, or flee.`,
+        `Ambush! A ${ENEMIES[spawn.templateId].name} bars the footing — Strike, Block, or Flee.`,
       );
     }
   }
@@ -257,14 +265,27 @@ export function moveTo(state: GameState, nodeId: string): GameState {
   return next;
 }
 
+/** Only engage spawns at your current node (Pokémon GO–style proximity). */
 export function selectSpawn(state: GameState, spawnId: string | null): GameState {
+  if (spawnId == null) {
+    if (state.pendingAmbushSpawnId) return state;
+    return { ...state, selectedSpawnId: null };
+  }
+  const spawn = state.spawns.find((s) => s.id === spawnId);
+  if (!spawn || spawn.hp <= 0) return state;
+  if (spawn.nodeId !== state.currentNodeId) {
+    return log(
+      state,
+      `Too far — walk to ${nodeById(spawn.nodeId).name} before you can fight that foe.`,
+    );
+  }
   return { ...state, selectedSpawnId: spawnId };
 }
 
 export function applyFight(
   state: GameState,
   spawnId: string,
-  mode: "fight" | "chip" | "flee",
+  mode: "strike" | "block" | "flee",
 ): GameState {
   const spawn = state.spawns.find((s) => s.id === spawnId);
   if (!spawn || spawn.hp <= 0) {
@@ -278,7 +299,7 @@ export function applyFight(
   const result = resolveFight(state, spawn, mode);
   let next: GameState = {
     ...state,
-    stepsRemaining: state.stepsRemaining - result.stepsSpent,
+    stepsRemaining: Math.max(0, state.stepsRemaining - result.stepsSpent),
     hp: result.hpAfter,
     gold: state.gold + result.goldGained,
     seed: state.seed + 3,
@@ -290,6 +311,7 @@ export function applyFight(
             ? null
             : state.pendingAmbushSpawnId
           : state.pendingAmbushSpawnId,
+    // Stay in battle while the foe lives (strike/block loop)
     selectedSpawnId: result.kind === "kill" || mode === "flee" ? null : spawnId,
   };
 
@@ -336,7 +358,11 @@ export function applyFight(
     }
     // Random skill point on elite kill
     if (spawn.elite) {
-      next = { ...next, skillPoints: next.skillPoints + 1 };
+      next = {
+        ...next,
+        skillPoints: next.skillPoints + 1,
+        skillPointsEarned: next.skillPointsEarned + 1,
+      };
       next = log(next, "Elite fallen — +1 skill point.");
     }
   } else {
@@ -430,6 +456,7 @@ export function claimHunt(state: GameState): GameState {
       gold: state.gold + state.hunt.rewardGold,
       hunt: { ...state.hunt, claimed: true },
       skillPoints: state.skillPoints + 1,
+      skillPointsEarned: state.skillPointsEarned + 1,
     },
     `Hunt reward claimed: +${state.hunt.rewardGold}g and +1 skill point.`,
   );

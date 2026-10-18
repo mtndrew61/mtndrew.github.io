@@ -23,4 +23,10 @@ npm test
 npm run build
 ```
 
-Use the step slider / **+2,000 steps** to simulate Health. Travel by clicking gold-ringed nodes. Click red spawns to fight. Visit **Briarhaven** to hire mercs, claim the hunt, and respec.
+**UI:** full-bleed map with overlay HUD (stats top, path chips bottom, Skills/Gear/Town/Menu on the right).
+
+**Progression:** skill points (start + hunt claim + elite kills) spent in four trees. **Traveler Rank** labels total points earned — there is no XP bar yet. See `ROADMAP.md`.
+
+Travel via path chips / gold rings. **Proximity combat** — pulse = in range. **Steps = stamina**: Strike / Block / Flee. Menu → **+2,000 steps** simulates Health until the iOS build.
+
+Town services (hire, respec, claim hunt) open from the **Town** rail when you’re in Briarhaven.
