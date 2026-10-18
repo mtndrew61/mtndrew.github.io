@@ -26,3 +26,5 @@ npm run build
 Use the step slider / **+2,000 steps** to simulate Health. Travel by clicking gold-ringed nodes or **path rumor** buttons at forks. Click red spawns to fight. Visit **Briarhaven** to hire mercs, claim the hunt, and respec.
 
 The map atmosphere shifts with your biome; forks show danger / loot / town tags so path choices feel intentional.
+
+**Proximity combat:** only foes on your current node can be engaged (Pokémon GO–style). Tapping one cuts to a battle scene with a short strike animation. Distant spawn dots stay visible but dimmed.

@@ -5,7 +5,6 @@ import {
   RESPEC_GOLD,
   WEAPONS,
 } from "../game/content";
-import { getSpawn, previewFight } from "../game/combat";
 import { getForkChoices } from "../game/forks";
 import { nodeById } from "../game/mapGraph";
 import { skillsByTree } from "../game/skills";
@@ -15,7 +14,6 @@ const TREES: SkillTree[] = ["melee", "archer", "rogue", "mage"];
 
 interface SidePanelProps {
   state: GameState;
-  onFight: (spawnId: string, mode: "fight" | "chip" | "flee") => void;
   onSelectSpawn: (id: string | null) => void;
   onTravel: (nodeId: string) => void;
   onOpenChest: (id: string) => void;
@@ -39,12 +37,6 @@ export function SidePanel(props: SidePanelProps) {
   const { state } = props;
   const node = nodeById(state.currentNodeId);
   const isTown = node.kind === "town";
-  const selected = state.selectedSpawnId
-    ? getSpawn(state, state.selectedSpawnId)
-    : state.pendingAmbushSpawnId
-      ? getSpawn(state, state.pendingAmbushSpawnId)
-      : undefined;
-  const preview = selected ? previewFight(state, selected) : null;
   const localChests = state.chests.filter(
     (c) => c.nodeId === state.currentNodeId && !c.opened,
   );
@@ -158,83 +150,21 @@ export function SidePanel(props: SidePanelProps) {
         )}
       </section>
 
-      {(selected || state.pendingAmbushSpawnId) && preview && selected && (
-        <section className="block combat">
-          <h3>
-            {state.pendingAmbushSpawnId ? "Ambush — " : ""}
-            {preview.enemyName}
-            {preview.elite ? " (elite)" : ""}
-          </h3>
-          <p className="muted">{ENEMIES[selected.templateId].blurb}</p>
-          <div className="meter">
-            <div
-              className="meter__fill meter__fill--danger"
-              style={{ width: `${(selected.hp / selected.maxHp) * 100}%` }}
-            />
-          </div>
-          <p className="meter__label">
-            {fmt(selected.hp)} / {fmt(selected.maxHp)} · ~{fmt(preview.stepsToKill)}{" "}
-            steps to finish · {preview.damagePerStep.toFixed(2)} dmg/step · loot{" "}
-            {preview.goldHint}g
-          </p>
-          {preview.mercName && (
-            <p className="pill-line">
-              {preview.mercName} covers {Math.round(preview.mercReduction * 100)}%
-              of the fight cost
-            </p>
-          )}
-          <div className="btn-row">
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() =>
-                props.onFight(
-                  selected.id,
-                  preview.canAfford ? "fight" : "chip",
-                )
-              }
-              disabled={state.stepsRemaining <= 0}
-            >
-              {preview.canAfford ? "Fight" : "Chip away"}
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => props.onFight(selected.id, "flee")}
-            >
-              Flee (free)
-            </button>
-          </div>
-          {!preview.canAfford && (
-            <p className="muted small">
-              Not enough for a clean kill — chip (~{preview.expectedPlayerDamageIfChip}{" "}
-              HP bruise if unfinished), flee free, or grant more steps.
-            </p>
-          )}
-          {!state.pendingAmbushSpawnId && (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => props.onSelectSpawn(null)}
-            >
-              Close
-            </button>
-          )}
-        </section>
-      )}
-
-      {localSpawns.length > 0 && !selected && (
+      {localSpawns.length > 0 && (
         <section className="block">
-          <h3>Foes here</h3>
+          <h3>Foes in range</h3>
+          <p className="muted small">
+            Only monsters at this node can be fought. Tap one to cut to battle.
+          </p>
           <ul className="list">
             {localSpawns.map((s) => (
               <li key={s.id}>
                 <button
                   type="button"
-                  className="linkish"
+                  className="btn btn--secondary"
                   onClick={() => props.onSelectSpawn(s.id)}
                 >
-                  {ENEMIES[s.templateId].name}
+                  Battle {ENEMIES[s.templateId].name}
                   {s.elite ? " ★" : ""} ({fmt(s.hp)} hp)
                 </button>
               </li>

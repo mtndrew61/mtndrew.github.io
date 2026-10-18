@@ -127,13 +127,197 @@
   fill: #8b3a2f;
   stroke: #f2e6c4;
   stroke-width: 2;
-  animation: foe-pulse 1.8s ease-in-out infinite;
 }
 
-.spawn--elite circle {
+.spawn--elite circle:last-of-type {
   fill: #6b2a6b;
   stroke: #e2c56a;
   stroke-width: 2.5;
+}
+
+.spawn--far {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.spawn--near circle:last-of-type {
+  animation: foe-pulse 1.5s ease-in-out infinite;
+}
+
+.spawn__range {
+  fill: none;
+  stroke: #e2c56a;
+  stroke-width: 2;
+  opacity: 0.7;
+  animation: range-ring 1.6s var(--ease-out) infinite;
+}
+
+@keyframes range-ring {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.35;
+  }
+}
+
+.app--battle {
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
+}
+
+.battle {
+  position: relative;
+  min-height: 100dvh;
+  padding: 1.5rem 1.25rem 2.5rem;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  overflow: hidden;
+  animation: panel-in 450ms var(--ease-out) both;
+  isolation: isolate;
+}
+
+.battle__sky {
+  position: absolute;
+  inset: 0 0 45% 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 20%, rgba(255, 220, 160, 0.35), transparent 55%),
+    linear-gradient(180deg, #6a8a72 0%, #3f5f48 100%);
+}
+
+.battle--ambush .battle__sky {
+  background:
+    radial-gradient(ellipse 50% 40% at 30% 30%, rgba(139, 58, 47, 0.35), transparent 55%),
+    linear-gradient(180deg, #4a3a38 0%, #2a3030 100%);
+}
+
+.battle__ground {
+  position: absolute;
+  inset: 45% 0 0 0;
+  z-index: -1;
+  background: linear-gradient(180deg, #4d7358 0%, #2a4533 100%);
+}
+
+.battle__header {
+  margin-bottom: 1.25rem;
+}
+
+.battle__eyebrow {
+  margin: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.battle__header h2 {
+  margin: 0.25rem 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+}
+
+.battle__arena {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: end;
+  margin: 1.5rem 0;
+  min-height: 200px;
+}
+
+.battle__fighter {
+  text-align: center;
+}
+
+.battle__sprite {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 0.65rem;
+  border-radius: 50%;
+  animation: pin-breathe 2.4s var(--ease-out) infinite;
+}
+
+.battle__sprite--you {
+  background:
+    radial-gradient(circle at 35% 30%, #c9dcc4, transparent 55%),
+    linear-gradient(145deg, #3d6b4f, #14241c);
+}
+
+.battle__sprite--foe {
+  background:
+    radial-gradient(circle at 40% 25%, #c45a4a, transparent 50%),
+    linear-gradient(145deg, #8b3a2f, #3a1814);
+  clip-path: polygon(50% 0%, 82% 22%, 72% 58%, 88% 100%, 12% 100%, 28% 58%, 18% 22%);
+  border-radius: 0;
+}
+
+.battle__sprite--foe.is-elite {
+  background:
+    radial-gradient(circle at 40% 25%, #c9a85a, transparent 50%),
+    linear-gradient(145deg, #6b2a6b, #2a1030);
+}
+
+.battle__fighter--foe.is-hit .battle__sprite {
+  animation: hit-shake 0.45s var(--ease-out);
+}
+
+.battle--strike .battle__fighter--you .battle__sprite {
+  animation: lunge 0.45s var(--ease-out);
+}
+
+.battle__name {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+}
+
+.battle__stats {
+  margin-bottom: 1rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.battle__hint {
+  margin-top: 0.75rem;
+}
+
+@keyframes hit-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px) rotate(-4deg);
+  }
+  75% {
+    transform: translateX(8px) rotate(3deg);
+  }
+}
+
+@keyframes lunge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(18px) scale(1.05);
+  }
+}
+
+@media (min-width: 960px) {
+  .app--battle {
+    grid-template-columns: 1fr;
+  }
+
+  .battle {
+    padding: 2.5rem;
+    max-width: 800px;
+  }
 }
 
 .player-pin__core {

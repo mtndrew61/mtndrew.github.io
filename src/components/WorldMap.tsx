@@ -100,10 +100,9 @@ export function WorldMap({
           <path d="M8 4 Q20 -20 18 -32" stroke="#3d6b4f" strokeWidth="2.5" fill="none" />
         </g>
 
-        {/* Town hearth glow */}
-        <circle cx="700" cy="275" r="28" fill="#c9a85a" opacity="0.18" />
-        <rect x="686" y="262" width="28" height="22" rx="3" fill="#6a4a28" opacity="0.85" />
-        <polygon points="684,262 700,246 716,262" fill="#8a6a3a" />
+        {/* Briarhaven cottage (small — no giant yellow field) */}
+        <rect x="690" y="268" width="20" height="16" rx="2" fill="#6a4a28" opacity="0.9" />
+        <polygon points="688,268 700,256 712,268" fill="#8a6a3a" />
 
         {NODES.map((n) => (
           <ellipse
@@ -193,26 +192,43 @@ export function WorldMap({
           const n = nodeById(s.nodeId);
           const tpl = ENEMIES[s.templateId];
           const offset = (i % 3) * 14 - 14;
+          const inRange = s.nodeId === state.currentNodeId;
           return (
             <g
               key={s.id}
               transform={`translate(${n.x + offset} ${n.y - 36})`}
-              className={s.elite ? "spawn spawn--elite" : "spawn"}
+              className={[
+                "spawn",
+                s.elite ? "spawn--elite" : "",
+                inRange ? "spawn--near" : "spawn--far",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={(ev) => {
                 ev.stopPropagation();
-                onSelectSpawn(s.id);
+                if (inRange) onSelectSpawn(s.id);
               }}
-              style={{ cursor: "pointer" }}
-              role="button"
-              tabIndex={0}
+              style={{ cursor: inRange ? "pointer" : "default" }}
+              role={inRange ? "button" : undefined}
+              tabIndex={inRange ? 0 : undefined}
               onKeyDown={(ev) => {
-                if (ev.key === "Enter" || ev.key === " ") onSelectSpawn(s.id);
+                if (inRange && (ev.key === "Enter" || ev.key === " ")) {
+                  onSelectSpawn(s.id);
+                }
               }}
-              aria-label={`Fight ${tpl.name}`}
+              aria-label={
+                inRange
+                  ? `Fight ${tpl.name}`
+                  : `${tpl.name} (too far — travel closer)`
+              }
             >
+              {inRange && (
+                <circle r="18" className="spawn__range" aria-hidden="true" />
+              )}
               <circle r={s.elite ? 11 : 8} />
               <title>
                 {tpl.name} @ {n.name} ({s.hp}/{s.maxHp})
+                {inRange ? " · tap to battle" : " · too far"}
               </title>
             </g>
           );
@@ -224,8 +240,8 @@ export function WorldMap({
       </svg>
       <p className="world-map__caption">{atmo.label}</p>
       <p className="world-map__hint">
-        Gold rings = adjacent paths. Forks show rumors in the panel. Red dots =
-        monsters. Ambush nodes may force a fight (flee is free).
+        Walk onto a node to engage its foes (proximity). Pulsing rings = in
+        range. Dim dots = too far. Ambush tiles can force a battle.
       </p>
     </section>
   );

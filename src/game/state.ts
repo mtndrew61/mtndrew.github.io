@@ -257,7 +257,20 @@ export function moveTo(state: GameState, nodeId: string): GameState {
   return next;
 }
 
+/** Only engage spawns at your current node (Pokémon GO–style proximity). */
 export function selectSpawn(state: GameState, spawnId: string | null): GameState {
+  if (spawnId == null) {
+    if (state.pendingAmbushSpawnId) return state;
+    return { ...state, selectedSpawnId: null };
+  }
+  const spawn = state.spawns.find((s) => s.id === spawnId);
+  if (!spawn || spawn.hp <= 0) return state;
+  if (spawn.nodeId !== state.currentNodeId) {
+    return log(
+      state,
+      `Too far — walk to ${nodeById(spawn.nodeId).name} before you can fight that foe.`,
+    );
+  }
   return { ...state, selectedSpawnId: spawnId };
 }
 
