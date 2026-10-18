@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { ENEMIES } from "../game/content";
-import { getSpawn, previewFight } from "../game/combat";
+import {
+  getSpawn,
+  previewFight,
+  type BattleAction,
+} from "../game/combat";
 import type { GameState } from "../game/types";
 
 interface BattleSceneProps {
   state: GameState;
-  onFight: (spawnId: string, mode: "fight" | "chip" | "flee") => void;
+  onFight: (spawnId: string, mode: BattleAction) => void;
   onClose: () => void;
 }
 
@@ -16,8 +20,8 @@ function fmt(n: number) {
 export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
   const spawnId = state.selectedSpawnId ?? state.pendingAmbushSpawnId;
   const spawn = spawnId ? getSpawn(state, spawnId) : undefined;
-  const [phase, setPhase] = useState<"idle" | "strike" | "resolve">("idle");
-  const [flash, setFlash] = useState<string | null>(null);
+  const [phase, setPhase] = useState<"idle" | "anim">("idle");
+  const [flash, setFlash] = useState<"strike" | "block" | null>(null);
 
   if (!spawn || !spawnId) return null;
 
@@ -26,24 +30,33 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
   const ambush = state.pendingAmbushSpawnId === spawn.id;
   const hpPct = (spawn.hp / spawn.maxHp) * 100;
   const youPct = (state.hp / state.maxHp) * 100;
+  const stamPct = Math.min(
+    100,
+    (state.stepsRemaining / Math.max(state.stepsGranted, 1)) * 100,
+  );
+  const lastLine = state.journal[0]?.text;
 
-  function act(mode: "fight" | "chip" | "flee") {
+  function act(mode: BattleAction) {
     if (mode === "flee") {
       onFight(spawnId!, "flee");
       return;
     }
-    setPhase("strike");
-    setFlash(mode === "fight" ? "strike" : "chip");
+    if (mode === "strike" && !preview.canStrike) return;
+    if (mode === "block" && !preview.canBlock) return;
+    setPhase("anim");
+    setFlash(mode);
     window.setTimeout(() => {
       onFight(spawnId!, mode);
-      setPhase("resolve");
+      setPhase("idle");
       setFlash(null);
-    }, 480);
+    }, 520);
   }
+
+  const busy = phase === "anim";
 
   return (
     <div
-      className={`battle ${ambush ? "battle--ambush" : ""} ${phase === "strike" ? "battle--strike" : ""}`}
+      className={`battle ${ambush ? "battle--ambush" : ""} ${flash === "strike" ? "battle--strike" : ""} ${flash === "block" ? "battle--block" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={`Battle: ${tpl.name}`}
@@ -53,7 +66,7 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
 
       <header className="battle__header">
         <p className="battle__eyebrow">
-          {ambush ? "Ambush!" : "Encounter"} · proximity fight
+          {ambush ? "Ambush" : "Battle"} · stamina strikes
         </p>
         <h2>
           {tpl.name}
@@ -63,7 +76,9 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
       </header>
 
       <div className="battle__arena">
-        <div className="battle__fighter battle__fighter--you">
+        <div
+          className={`battle__fighter battle__fighter--you ${flash === "block" ? "is-guard" : ""}`}
+        >
           <div className="battle__sprite battle__sprite--you" aria-hidden="true" />
           <p className="battle__name">You</p>
           <div className="meter">
@@ -73,12 +88,21 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
             />
           </div>
           <p className="meter__label">
-            {state.hp}/{state.maxHp} HP · {fmt(state.stepsRemaining)} steps
+            {state.hp}/{state.maxHp} HP
+          </p>
+          <div className="meter meter--slim">
+            <div
+              className="meter__fill meter__fill--stam"
+              style={{ width: `${stamPct}%` }}
+            />
+          </div>
+          <p className="meter__label">
+            {fmt(state.stepsRemaining)} stamina (steps)
           </p>
         </div>
 
         <div
-          className={`battle__fighter battle__fighter--foe ${flash ? "is-hit" : ""}`}
+          className={`battle__fighter battle__fighter--foe ${flash === "strike" ? "is-hit" : ""}`}
         >
           <div
             className={`battle__sprite battle__sprite--foe ${preview.elite ? "is-elite" : ""}`}
@@ -92,46 +116,59 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
             />
           </div>
           <p className="meter__label">
-            {fmt(spawn.hp)} / {fmt(spawn.maxHp)} spite
+            {fmt(spawn.hp)} / {fmt(spawn.maxHp)}
           </p>
         </div>
       </div>
 
       <div className="battle__stats">
         <p>
-          ~{fmt(preview.stepsToKill)} steps to finish ·{" "}
-          {preview.damagePerStep.toFixed(2)} dmg/step · loot {preview.goldHint}g
+          Strike ~{fmt(preview.strikeDamage)} dmg · {preview.strikesToKill} hits
+          to fell · loot {preview.goldHint}g
         </p>
-        {preview.mercName && (
-          <p className="pill-line">
-            {preview.mercName}: −{Math.round(preview.mercReduction * 100)}% fight
-            cost
-          </p>
-        )}
+        <p className="muted small">
+          Open hit {preview.openHit} · Blocked hit {preview.blockedHit} · gear +
+          skills set both
+        </p>
+        {preview.mercNote && <p className="pill-line">{preview.mercNote}</p>}
       </div>
+
+      {lastLine && (
+        <p className="battle__log" aria-live="polite">
+          {lastLine}
+        </p>
+      )}
 
       <div className="battle__actions btn-row">
         <button
           type="button"
           className="btn btn--primary"
-          disabled={state.stepsRemaining <= 0 || phase === "strike"}
-          onClick={() => act(preview.canAfford ? "fight" : "chip")}
+          disabled={busy || !preview.canStrike}
+          onClick={() => act("strike")}
         >
-          {preview.canAfford ? "Strike" : "Chip away"}
+          Strike (−{fmt(preview.strikeCost)})
+        </button>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          disabled={busy || !preview.canBlock}
+          onClick={() => act("block")}
+        >
+          Block (−{fmt(preview.blockCost)})
         </button>
         <button
           type="button"
           className="btn btn--ghost"
-          disabled={phase === "strike"}
+          disabled={busy}
           onClick={() => act("flee")}
         >
-          Flee (free)
+          Flee
         </button>
         {!ambush && (
           <button
             type="button"
             className="btn btn--ghost"
-            disabled={phase === "strike"}
+            disabled={busy}
             onClick={onClose}
           >
             Back to map
@@ -139,10 +176,10 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
         )}
       </div>
 
-      {!preview.canAfford && (
+      {!preview.canStrike && (
         <p className="muted small battle__hint">
-          Not enough steps for a clean kill — chip (~
-          {preview.expectedPlayerDamageIfChip} HP bruise if unfinished) or flee.
+          Out of strike stamina — Block if you can, Flee, or leave and walk to
+          recover steps.
         </p>
       )}
     </div>

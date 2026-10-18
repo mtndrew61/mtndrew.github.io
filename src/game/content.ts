@@ -269,7 +269,7 @@ export const MERCS: Record<string, Merc> = {
     stepReduction: 0.18,
     hireGold: 40,
     fights: MERC_FIGHTS,
-    blurb: "Cuts 18% off fight step cost for 3 fights.",
+    blurb: "Eases strike stamina ~18% for 3 fights.",
   },
   "stone-shield": {
     id: "stone-shield",
@@ -277,7 +277,7 @@ export const MERCS: Record<string, Merc> = {
     stepReduction: 0.12,
     hireGold: 35,
     fights: MERC_FIGHTS,
-    blurb: "Sturdier ally; softer step discount.",
+    blurb: "Softer stamina ease; still helps every swing.",
   },
 };
 

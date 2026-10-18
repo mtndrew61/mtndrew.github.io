@@ -20,6 +20,7 @@ import {
   saveState,
   selectSpawn,
 } from "./game/state";
+import type { BattleAction } from "./game/combat";
 import type { GameState } from "./game/types";
 import "./App.css";
 
@@ -38,7 +39,9 @@ export default function App() {
         <BattleScene
           key={state.selectedSpawnId ?? state.pendingAmbushSpawnId ?? "battle"}
           state={state}
-          onFight={(id, mode) => setState((s) => applyFight(s, id, mode))}
+          onFight={(id, mode: BattleAction) =>
+            setState((s) => applyFight(s, id, mode))
+          }
           onClose={() => setState((s) => selectSpawn(s, null))}
         />
       </div>

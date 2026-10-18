@@ -25,6 +25,6 @@ npm run build
 
 **UI:** full-bleed map with overlay HUD (stats top, path chips bottom, Skills/Gear/Town/Menu on the right). No blog-style side column.
 
-Travel via gold-ringed nodes or bottom path chips. **Proximity combat** only — foes on your node pulse; tap to cut to a battle scene. Distant dots are dim. Menu → **+2,000 steps** / Next day simulates Health for the web demo.
+Travel via gold-ringed nodes or bottom path chips. **Proximity combat** — foes on your node pulse; tap to cut to battle. **Steps = stamina**: each Strike costs stamina and deals damage from weapon + skills; the foe hits back unless you **Block** (cheaper stamina, big mitigation). Flee is free. Distant dots are dim. Menu → **+2,000 steps** / Next day simulates Health.
 
 Town services (hire, respec, claim hunt) open from the **Town** rail when you’re in Briarhaven.

@@ -243,7 +243,7 @@ export function moveTo(state: GameState, nodeId: string): GameState {
       };
       next = log(
         next,
-        `Ambush! A ${ENEMIES[spawn.templateId].name} bars the footing — fight, chip, or flee.`,
+        `Ambush! A ${ENEMIES[spawn.templateId].name} bars the footing — Strike, Block, or Flee.`,
       );
     }
   }
@@ -277,7 +277,7 @@ export function selectSpawn(state: GameState, spawnId: string | null): GameState
 export function applyFight(
   state: GameState,
   spawnId: string,
-  mode: "fight" | "chip" | "flee",
+  mode: "strike" | "block" | "flee",
 ): GameState {
   const spawn = state.spawns.find((s) => s.id === spawnId);
   if (!spawn || spawn.hp <= 0) {
@@ -291,7 +291,7 @@ export function applyFight(
   const result = resolveFight(state, spawn, mode);
   let next: GameState = {
     ...state,
-    stepsRemaining: state.stepsRemaining - result.stepsSpent,
+    stepsRemaining: Math.max(0, state.stepsRemaining - result.stepsSpent),
     hp: result.hpAfter,
     gold: state.gold + result.goldGained,
     seed: state.seed + 3,
@@ -303,6 +303,7 @@ export function applyFight(
             ? null
             : state.pendingAmbushSpawnId
           : state.pendingAmbushSpawnId,
+    // Stay in battle while the foe lives (strike/block loop)
     selectedSpawnId: result.kind === "kill" || mode === "flee" ? null : spawnId,
   };
 

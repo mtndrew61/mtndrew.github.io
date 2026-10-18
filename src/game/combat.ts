@@ -3,21 +3,37 @@ import { mulberry32 } from "./rng";
 import { totalsFromSkills } from "./skills";
 import type { GameState, Spawn } from "./types";
 
+/** Stamina (steps) spent per strike — weapon weight nudges cost. */
+export const BASE_STRIKE_COST = 480;
+/** Stamina spent to raise a shield for the enemy’s swing. */
+export const BASE_BLOCK_COST = 220;
+/** Baseline spite before gear / skills. */
+export const BASE_STRIKE_DAMAGE = 260;
+/** Block multiplies remaining incoming after armor (lower = stronger block). */
+export const BLOCK_FACTOR = 0.32;
+
+export type BattleAction = "strike" | "block" | "flee";
+
 export interface FightPreview {
   spawn: Spawn;
   enemyName: string;
-  stepsToKill: number;
-  canAfford: boolean;
-  expectedPlayerDamageIfChip: number;
-  goldHint: string;
   elite: boolean;
-  damagePerStep: number;
-  mercReduction: number;
+  goldHint: string;
+  strikeCost: number;
+  blockCost: number;
+  strikeDamage: number;
+  strikesToKill: number;
+  canStrike: boolean;
+  canBlock: boolean;
+  openHit: number;
+  blockedHit: number;
   mercName: string | null;
+  mercNote: string | null;
 }
 
 export interface FightResult {
-  kind: "kill" | "chip" | "flee";
+  kind: "kill" | "ongoing" | "flee";
+  action: BattleAction;
   stepsSpent: number;
   damageDealt: number;
   playerDamageTaken: number;
@@ -25,6 +41,7 @@ export interface FightResult {
   hpAfter: number;
   spawnHpAfter: number;
   crit: boolean;
+  blocked: boolean;
   journal: string;
 }
 
@@ -32,57 +49,95 @@ export function getSpawn(state: GameState, spawnId: string): Spawn | undefined {
   return state.spawns.find((s) => s.id === spawnId);
 }
 
+export function strikeStaminaCost(state: GameState): number {
+  const weapon = WEAPONS[state.weaponId];
+  // Heavier / stronger blades cost a bit more stamina
+  let cost = Math.round(BASE_STRIKE_COST * (0.85 + weapon.damageMult * 0.2));
+  if (state.merc) {
+    const red = MERCS[state.merc.id]?.stepReduction ?? 0;
+    cost = Math.round(cost * (1 - red));
+  }
+  return Math.max(200, cost);
+}
+
+export function blockStaminaCost(state: GameState): number {
+  let cost = BASE_BLOCK_COST;
+  if (state.merc) {
+    const red = (MERCS[state.merc.id]?.stepReduction ?? 0) * 0.5;
+    cost = Math.round(cost * (1 - red));
+  }
+  return Math.max(100, cost);
+}
+
+/** Damage dealt by one Strike from gear + skills (+ crit rolled separately). */
+export function strikeDamage(state: GameState, crit = false): number {
+  const weapon = WEAPONS[state.weaponId];
+  const skills = totalsFromSkills(state);
+  let dmg = BASE_STRIKE_DAMAGE * weapon.damageMult * (1 + skills.damageMult);
+  dmg += skills.burstFlat * 0.35;
+  if (state.merc) {
+    dmg *= 1 + (MERCS[state.merc.id]?.stepReduction ?? 0) * 0.5;
+  }
+  if (crit) dmg *= 1.35;
+  return Math.max(1, Math.round(dmg));
+}
+
+function mitigation(state: GameState): number {
+  const armor = ARMORS[state.armorId];
+  const skills = totalsFromSkills(state);
+  return Math.min(0.75, armor.mitigation + skills.mitigation);
+}
+
+export function openHitDamage(state: GameState, touchDamage: number): number {
+  return Math.max(1, Math.round(touchDamage * (1 - mitigation(state))));
+}
+
+export function blockedHitDamage(state: GameState, touchDamage: number): number {
+  return Math.max(
+    1,
+    Math.round(touchDamage * (1 - mitigation(state)) * BLOCK_FACTOR),
+  );
+}
+
 export function previewFight(state: GameState, spawn: Spawn): FightPreview {
   const tpl = ENEMIES[spawn.templateId];
-  const dps = damagePerStep(state);
-  const stepsToKill = Math.max(1, Math.ceil(spawn.hp / dps));
-  const canAfford = state.stepsRemaining >= stepsToKill;
-  const touch = incomingTouch(state, tpl.touchDamage);
-  const mercReduction = state.merc
-    ? (MERCS[state.merc.id]?.stepReduction ?? 0)
-    : 0;
-  const mercName = state.merc ? (MERCS[state.merc.id]?.name ?? null) : null;
+  const strikeCost = strikeStaminaCost(state);
+  const blockCost = blockStaminaCost(state);
+  const dmg = strikeDamage(state, false);
+  const merc = state.merc ? MERCS[state.merc.id] : null;
   return {
     spawn,
     enemyName: tpl.name,
-    stepsToKill,
-    canAfford,
-    expectedPlayerDamageIfChip: touch,
-    goldHint: `${tpl.goldMin}–${tpl.goldMax}`,
     elite: spawn.elite,
-    damagePerStep: dps,
-    mercReduction,
-    mercName,
+    goldHint: `${tpl.goldMin}–${tpl.goldMax}`,
+    strikeCost,
+    blockCost,
+    strikeDamage: dmg,
+    strikesToKill: Math.max(1, Math.ceil(spawn.hp / dmg)),
+    canStrike: state.stepsRemaining >= strikeCost,
+    canBlock: state.stepsRemaining >= blockCost,
+    openHit: openHitDamage(state, tpl.touchDamage),
+    blockedHit: blockedHitDamage(state, tpl.touchDamage),
+    mercName: merc?.name ?? null,
+    mercNote: merc
+      ? `Ally eases stamina (−${Math.round(merc.stepReduction * 100)}%)`
+      : null,
   };
-}
-
-export function damagePerStep(state: GameState): number {
-  const weapon = WEAPONS[state.weaponId];
-  const skills = totalsFromSkills(state);
-  let merc = 0;
-  if (state.merc) {
-    merc = MERCS[state.merc.id]?.stepReduction ?? 0;
-  }
-  // Merc reduces effective HP cost → equivalent to more damage/step
-  const mercMult = 1 / Math.max(0.5, 1 - merc);
-  return Math.max(0.5, weapon.damageMult * (1 + skills.damageMult) * mercMult);
-}
-
-function incomingTouch(state: GameState, base: number): number {
-  const armor = ARMORS[state.armorId];
-  const skills = totalsFromSkills(state);
-  const mit = Math.min(0.75, armor.mitigation + skills.mitigation);
-  return Math.max(1, Math.round(base * (1 - mit)));
 }
 
 export function resolveFight(
   state: GameState,
   spawn: Spawn,
-  mode: "fight" | "chip" | "flee",
+  action: BattleAction,
 ): FightResult {
-  if (mode === "flee") {
+  const tpl = ENEMIES[spawn.templateId];
+  const skills = totalsFromSkills(state);
+  const rng = mulberry32(state.seed + spawn.hp + state.stepsRemaining + action.length);
+
+  if (action === "flee") {
     return {
       kind: "flee",
+      action,
       stepsSpent: 0,
       damageDealt: 0,
       playerDamageTaken: 0,
@@ -90,41 +145,70 @@ export function resolveFight(
       hpAfter: state.hp,
       spawnHpAfter: spawn.hp,
       crit: false,
-      journal: `You slip away from the ${ENEMIES[spawn.templateId].name}. No shame in open roads.`,
+      blocked: false,
+      journal: `You break off from the ${tpl.name}.`,
     };
   }
 
-  const tpl = ENEMIES[spawn.templateId];
-  const dps = damagePerStep(state);
-  const skills = totalsFromSkills(state);
-  const rng = mulberry32(state.seed + spawn.hp + state.stepsRemaining);
+  if (action === "block") {
+    const cost = blockStaminaCost(state);
+    if (state.stepsRemaining < cost) {
+      return {
+        kind: "ongoing",
+        action,
+        stepsSpent: 0,
+        damageDealt: 0,
+        playerDamageTaken: 0,
+        goldGained: 0,
+        hpAfter: state.hp,
+        spawnHpAfter: spawn.hp,
+        crit: false,
+        blocked: false,
+        journal: "Not enough stamina to raise a shield.",
+      };
+    }
+    const taken = blockedHitDamage(state, tpl.touchDamage);
+    return {
+      kind: "ongoing",
+      action,
+      stepsSpent: cost,
+      damageDealt: 0,
+      playerDamageTaken: taken,
+      goldGained: 0,
+      hpAfter: Math.max(0, state.hp - taken),
+      spawnHpAfter: spawn.hp,
+      crit: false,
+      blocked: true,
+      journal: `Shield up (−${cost} stam). ${tpl.name} connects for ${taken} (blocked).`,
+    };
+  }
+
+  // Strike
+  const cost = strikeStaminaCost(state);
+  if (state.stepsRemaining < cost) {
+    return {
+      kind: "ongoing",
+      action,
+      stepsSpent: 0,
+      damageDealt: 0,
+      playerDamageTaken: 0,
+      goldGained: 0,
+      hpAfter: state.hp,
+      spawnHpAfter: spawn.hp,
+      crit: false,
+      blocked: false,
+      journal: "Not enough stamina to strike.",
+    };
+  }
+
   const crit = rng() < skills.critChance;
-  const burst = skills.burstFlat + (crit ? skills.burstFlat * 0.5 : 0);
-
-  const stepsToKill = Math.max(1, Math.ceil(Math.max(0, spawn.hp - burst) / dps));
-  const spend =
-    mode === "fight"
-      ? Math.min(state.stepsRemaining, stepsToKill)
-      : Math.min(state.stepsRemaining, stepsToKill);
-
-  // Always spend what we can; "fight" vs "chip" same spend rule when short
-  let damageDealt = Math.floor(spend * dps + burst);
-  if (crit) damageDealt = Math.floor(damageDealt * 1.25);
-
+  const damageDealt = strikeDamage(state, crit);
   const spawnHpAfter = Math.max(0, spawn.hp - damageDealt);
   const killed = spawnHpAfter === 0;
 
   let playerDamageTaken = 0;
   if (!killed) {
-    playerDamageTaken = incomingTouch(state, tpl.touchDamage);
-  } else if (spend < stepsToKill) {
-    // shouldn't happen if killed
-    playerDamageTaken = 0;
-  }
-
-  // If you fully fund the kill, no touch damage
-  if (killed && state.stepsRemaining >= stepsToKill) {
-    playerDamageTaken = 0;
+    playerDamageTaken = openHitDamage(state, tpl.touchDamage);
   }
 
   let goldGained = 0;
@@ -135,20 +219,21 @@ export function resolveFight(
     goldGained = Math.round(base * (1 + skills.goldFind));
   }
 
-  const hpAfter = Math.max(0, state.hp - playerDamageTaken);
   const journal = killed
-    ? `Fell the ${tpl.name}${crit ? " (crit!)" : ""} for ${goldGained} gold.`
-    : `Chipped the ${tpl.name} for ${damageDealt} spite. ${spawnHpAfter} remains. Took ${playerDamageTaken} bruises.`;
+    ? `Final blow${crit ? " (crit!)" : ""} — ${tpl.name} down. +${goldGained}g.`
+    : `Strike${crit ? " (crit!)" : ""} for ${damageDealt} (−${cost} stam). ${tpl.name} hits back for ${playerDamageTaken}.`;
 
   return {
-    kind: killed ? "kill" : "chip",
-    stepsSpent: spend,
+    kind: killed ? "kill" : "ongoing",
+    action,
+    stepsSpent: cost,
     damageDealt,
     playerDamageTaken,
     goldGained,
-    hpAfter,
+    hpAfter: Math.max(0, state.hp - playerDamageTaken),
     spawnHpAfter,
     crit,
+    blocked: false,
     journal,
   };
 }

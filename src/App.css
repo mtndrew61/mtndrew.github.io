@@ -292,6 +292,10 @@
   background: linear-gradient(90deg, var(--moss-bright), #a8d4b0);
 }
 
+.meter__fill--stam {
+  background: linear-gradient(90deg, #c9a85a, #e2c56a);
+}
+
 .meter__label {
   margin: 0.25rem 0 0;
   font-size: 0.85rem;
@@ -742,6 +746,21 @@
   animation: lunge 0.45s var(--ease-out);
 }
 
+.battle__fighter--you.is-guard .battle__sprite {
+  outline: 4px solid rgba(201, 168, 90, 0.9);
+  outline-offset: 2px;
+  animation: guard-pulse 0.5s var(--ease-out);
+}
+
+.battle__log {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(20, 36, 28, 0.08);
+  border-left: 3px solid var(--gold);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
 .battle__name {
   margin: 0 0 0.35rem;
   font-weight: 700;
@@ -849,6 +868,18 @@
   }
   40% {
     transform: translateX(18px) scale(1.05);
+  }
+}
+
+@keyframes guard-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
