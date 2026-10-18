@@ -87,6 +87,7 @@ export function createInitialState(seed = Date.now() % 1_000_000): GameState {
     unlockedWeapons: ["walking-stick"],
     unlockedArmor: ["travel-cloak"],
     skillPoints: 3,
+    skillPointsEarned: 3,
     skills: {},
     merc: null,
     spawns: [],
@@ -112,6 +113,13 @@ export function loadState(): GameState {
     if (!raw) return createInitialState();
     const parsed = JSON.parse(raw) as GameState;
     if (!parsed?.currentNodeId || !parsed.spawns) return createInitialState();
+    if (parsed.skillPointsEarned == null) {
+      const spent = Object.values(parsed.skills ?? {}).reduce(
+        (a, b) => a + b,
+        0,
+      );
+      parsed.skillPointsEarned = spent + (parsed.skillPoints ?? 0);
+    }
     return parsed;
   } catch {
     return createInitialState();
@@ -350,7 +358,11 @@ export function applyFight(
     }
     // Random skill point on elite kill
     if (spawn.elite) {
-      next = { ...next, skillPoints: next.skillPoints + 1 };
+      next = {
+        ...next,
+        skillPoints: next.skillPoints + 1,
+        skillPointsEarned: next.skillPointsEarned + 1,
+      };
       next = log(next, "Elite fallen — +1 skill point.");
     }
   } else {
@@ -444,6 +456,7 @@ export function claimHunt(state: GameState): GameState {
       gold: state.gold + state.hunt.rewardGold,
       hunt: { ...state.hunt, claimed: true },
       skillPoints: state.skillPoints + 1,
+      skillPointsEarned: state.skillPointsEarned + 1,
     },
     `Hunt reward claimed: +${state.hunt.rewardGold}g and +1 skill point.`,
   );

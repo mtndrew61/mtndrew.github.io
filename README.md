@@ -23,8 +23,10 @@ npm test
 npm run build
 ```
 
-**UI:** full-bleed map with overlay HUD (stats top, path chips bottom, Skills/Gear/Town/Menu on the right). No blog-style side column.
+**UI:** full-bleed map with overlay HUD (stats top, path chips bottom, Skills/Gear/Town/Menu on the right).
 
-Travel via gold-ringed nodes or bottom path chips. **Proximity combat** — foes on your node pulse; tap to cut to battle. **Steps = stamina**: each Strike costs stamina and deals damage from weapon + skills; the foe hits back unless you **Block** (cheaper stamina, big mitigation). Flee is free. Distant dots are dim. Menu → **+2,000 steps** / Next day simulates Health.
+**Progression:** skill points (start + hunt claim + elite kills) spent in four trees. **Traveler Rank** labels total points earned — there is no XP bar yet. See `ROADMAP.md`.
+
+Travel via path chips / gold rings. **Proximity combat** — pulse = in range. **Steps = stamina**: Strike / Block / Flee. Menu → **+2,000 steps** simulates Health until the iOS build.
 
 Town services (hire, respec, claim hunt) open from the **Town** rail when you’re in Briarhaven.

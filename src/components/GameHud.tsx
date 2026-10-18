@@ -8,6 +8,7 @@ import {
 } from "../game/content";
 import { getForkChoices } from "../game/forks";
 import { nodeById } from "../game/mapGraph";
+import { progressSummary } from "../game/progress";
 import { skillsByTree } from "../game/skills";
 import type { GameState, MercId, SkillTree, ArmorId, WeaponId } from "../game/types";
 
@@ -50,6 +51,7 @@ export function GameHud(props: GameHudProps) {
     (state.hunt.progress / state.hunt.targetKills) * 100,
   );
   const latest = state.journal[0]?.text;
+  const progress = progressSummary(state);
 
   return (
     <div className="hud-root">
@@ -57,6 +59,9 @@ export function GameHud(props: GameHudProps) {
         <div className="hud-brand">
           <span className="hud-brand__mark">Step Quest</span>
           <span className="hud-brand__place">{node.name}</span>
+          <span className="hud-brand__rank">
+            Rank {progress.rank} · {progress.title}
+          </span>
         </div>
         <div className="hud-stats" role="group" aria-label="Status">
           <div className="hud-stat">
@@ -213,7 +218,12 @@ export function GameHud(props: GameHudProps) {
             {sheet === "skills" && (
               <div className="sheet__body">
                 <p className="muted small">
-                  {state.skillPoints} points · hybrid OK · respec in town
+                  Rank {progress.rank} {progress.title} · {progress.unspent}{" "}
+                  unspent / {progress.earned} earned · hybrid OK · respec in town
+                </p>
+                <p className="muted small">
+                  Earn points from daily hunt claims and elite kills — no XP bar
+                  yet.
                 </p>
                 {TREES.map((tree) => (
                   <div key={tree} className="skill-tree">

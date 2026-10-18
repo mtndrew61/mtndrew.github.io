@@ -1,6 +1,7 @@
 import { BIOME_ATMO, BIOME_FILL, EDGES, ENEMIES, NODES } from "../game/content";
 import { nodeById } from "../game/mapGraph";
 import type { BiomeId, GameState } from "../game/types";
+import { MapFoeMark, MapPlayerPin } from "./sprites";
 
 interface WorldMapProps {
   state: GameState;
@@ -223,9 +224,9 @@ export function WorldMap({
               }
             >
               {inRange && (
-                <circle r="18" className="spawn__range" aria-hidden="true" />
+                <circle r="20" className="spawn__range" aria-hidden="true" />
               )}
-              <circle r={s.elite ? 11 : 8} />
+              <MapFoeMark elite={s.elite} />
               <title>
                 {tpl.name} @ {n.name} ({s.hp}/{s.maxHp})
                 {inRange ? " · tap to battle" : " · too far"}
@@ -234,8 +235,8 @@ export function WorldMap({
           );
         })}
 
-        <g transform={`translate(${here.x} ${here.y})`} className="player-pin">
-          <circle r="7" className="player-pin__core" />
+        <g transform={`translate(${here.x} ${here.y})`}>
+          <MapPlayerPin />
         </g>
       </svg>
       <p className="world-map__caption">{atmo.label}</p>

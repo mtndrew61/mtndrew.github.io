@@ -6,6 +6,7 @@ import {
   type BattleAction,
 } from "../game/combat";
 import type { GameState } from "../game/types";
+import { FoeSprite, PlayerSprite } from "./sprites";
 
 interface BattleSceneProps {
   state: GameState;
@@ -79,7 +80,7 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
         <div
           className={`battle__fighter battle__fighter--you ${flash === "block" ? "is-guard" : ""}`}
         >
-          <div className="battle__sprite battle__sprite--you" aria-hidden="true" />
+          <PlayerSprite className="battle__sprite battle__sprite--you" />
           <p className="battle__name">You</p>
           <div className="meter">
             <div
@@ -104,9 +105,10 @@ export function BattleScene({ state, onFight, onClose }: BattleSceneProps) {
         <div
           className={`battle__fighter battle__fighter--foe ${flash === "strike" ? "is-hit" : ""}`}
         >
-          <div
+          <FoeSprite
+            kind={spawn.templateId}
+            elite={preview.elite}
             className={`battle__sprite battle__sprite--foe ${preview.elite ? "is-elite" : ""}`}
-            aria-hidden="true"
           />
           <p className="battle__name">{tpl.name}</p>
           <div className="meter">

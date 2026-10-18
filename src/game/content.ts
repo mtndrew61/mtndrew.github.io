@@ -8,7 +8,7 @@ import type {
   Weapon,
 } from "./types";
 
-export const STORAGE_KEY = "step-quest-demo-v2";
+export const STORAGE_KEY = "step-quest-demo-v3";
 
 export const PLAYER_MAX_HP = 100;
 export const DEFAULT_STEPS = 8000;
