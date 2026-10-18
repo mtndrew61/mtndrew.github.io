@@ -11,6 +11,9 @@ export interface FightPreview {
   expectedPlayerDamageIfChip: number;
   goldHint: string;
   elite: boolean;
+  damagePerStep: number;
+  mercReduction: number;
+  mercName: string | null;
 }
 
 export interface FightResult {
@@ -31,9 +34,14 @@ export function getSpawn(state: GameState, spawnId: string): Spawn | undefined {
 
 export function previewFight(state: GameState, spawn: Spawn): FightPreview {
   const tpl = ENEMIES[spawn.templateId];
-  const stepsToKill = Math.max(1, Math.ceil(spawn.hp / damagePerStep(state)));
+  const dps = damagePerStep(state);
+  const stepsToKill = Math.max(1, Math.ceil(spawn.hp / dps));
   const canAfford = state.stepsRemaining >= stepsToKill;
   const touch = incomingTouch(state, tpl.touchDamage);
+  const mercReduction = state.merc
+    ? (MERCS[state.merc.id]?.stepReduction ?? 0)
+    : 0;
+  const mercName = state.merc ? (MERCS[state.merc.id]?.name ?? null) : null;
   return {
     spawn,
     enemyName: tpl.name,
@@ -42,6 +50,9 @@ export function previewFight(state: GameState, spawn: Spawn): FightPreview {
     expectedPlayerDamageIfChip: touch,
     goldHint: `${tpl.goldMin}–${tpl.goldMax}`,
     elite: spawn.elite,
+    damagePerStep: dps,
+    mercReduction,
+    mercName,
   };
 }
 

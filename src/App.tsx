@@ -43,6 +43,7 @@ export default function App() {
         state={state}
         onFight={(id, mode) => setState((s) => applyFight(s, id, mode))}
         onSelectSpawn={(id) => setState((s) => selectSpawn(s, id))}
+        onTravel={(id) => setState((s) => moveTo(s, id))}
         onOpenChest={(id) => setState((s) => openChest(s, id))}
         onHire={(id) => setState((s) => hireMerc(s, id))}
         onClaimHunt={() => setState((s) => claimHunt(s))}

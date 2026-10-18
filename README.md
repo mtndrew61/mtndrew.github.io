@@ -23,4 +23,6 @@ npm test
 npm run build
 ```
 
-Use the step slider / **+2,000 steps** to simulate Health. Travel by clicking gold-ringed nodes. Click red spawns to fight. Visit **Briarhaven** to hire mercs, claim the hunt, and respec.
+Use the step slider / **+2,000 steps** to simulate Health. Travel by clicking gold-ringed nodes or **path rumor** buttons at forks. Click red spawns to fight. Visit **Briarhaven** to hire mercs, claim the hunt, and respec.
+
+The map atmosphere shifts with your biome; forks show danger / loot / town tags so path choices feel intentional.

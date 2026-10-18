@@ -6,6 +6,7 @@ import {
   WEAPONS,
 } from "../game/content";
 import { getSpawn, previewFight } from "../game/combat";
+import { getForkChoices } from "../game/forks";
 import { nodeById } from "../game/mapGraph";
 import { skillsByTree } from "../game/skills";
 import type { GameState, MercId, SkillTree, ArmorId, WeaponId } from "../game/types";
@@ -16,6 +17,7 @@ interface SidePanelProps {
   state: GameState;
   onFight: (spawnId: string, mode: "fight" | "chip" | "flee") => void;
   onSelectSpawn: (id: string | null) => void;
+  onTravel: (nodeId: string) => void;
   onOpenChest: (id: string) => void;
   onHire: (id: MercId) => void;
   onClaimHunt: () => void;
@@ -47,6 +49,8 @@ export function SidePanel(props: SidePanelProps) {
     (c) => c.nodeId === state.currentNodeId && !c.opened,
   );
   const localSpawns = state.spawns.filter((s) => s.nodeId === state.currentNodeId);
+  const choices = getForkChoices(state);
+  const showForkPanel = node.kind === "fork" || choices.length > 2;
 
   return (
     <aside className="side">
@@ -93,6 +97,44 @@ export function SidePanel(props: SidePanelProps) {
         )}
       </section>
 
+      {showForkPanel && !state.pendingAmbushSpawnId && (
+        <section className="block forks">
+          <h3>{node.kind === "fork" ? "Choose a road" : "Paths from here"}</h3>
+          <ul className="fork-list">
+            {choices.map((c) => (
+              <li key={c.toId} className="fork-card">
+                <div className="fork-card__head">
+                  <strong>{c.rumor?.title ?? c.name}</strong>
+                  <span className="fork-card__cost">
+                    {c.cost != null ? `${fmt(c.cost)} steps` : "—"}
+                  </span>
+                </div>
+                <p className="muted small">
+                  {c.rumor?.rumor ?? nodeById(c.toId).blurb}
+                </p>
+                {c.tags.length > 0 && (
+                  <div className="tag-row">
+                    {c.tags.map((t) => (
+                      <span key={t} className={`tag tag--${t}`}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="btn btn--secondary"
+                  disabled={!c.affordable || !!state.pendingAmbushSpawnId}
+                  onClick={() => props.onTravel(c.toId)}
+                >
+                  {c.affordable ? `Take path to ${c.name}` : "Need more steps"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="block hunt">
         <h3>Daily hunt</h3>
         <p>
@@ -132,8 +174,15 @@ export function SidePanel(props: SidePanelProps) {
           </div>
           <p className="meter__label">
             {fmt(selected.hp)} / {fmt(selected.maxHp)} · ~{fmt(preview.stepsToKill)}{" "}
-            steps to finish · loot {preview.goldHint}g
+            steps to finish · {preview.damagePerStep.toFixed(2)} dmg/step · loot{" "}
+            {preview.goldHint}g
           </p>
+          {preview.mercName && (
+            <p className="pill-line">
+              {preview.mercName} covers {Math.round(preview.mercReduction * 100)}%
+              of the fight cost
+            </p>
+          )}
           <div className="btn-row">
             <button
               type="button"
@@ -158,8 +207,8 @@ export function SidePanel(props: SidePanelProps) {
           </div>
           {!preview.canAfford && (
             <p className="muted small">
-              Not enough steps for a clean kill — chip with what you have (they
-              bruise back), flee for free, or explore more after granting steps.
+              Not enough for a clean kill — chip (~{preview.expectedPlayerDamageIfChip}{" "}
+              HP bruise if unfinished), flee free, or grant more steps.
             </p>
           )}
           {!state.pendingAmbushSpawnId && (
