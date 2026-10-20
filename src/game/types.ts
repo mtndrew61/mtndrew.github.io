@@ -147,6 +147,8 @@ export interface GameState {
   day: string;
   stepsRemaining: number;
   stepsGranted: number;
+  /** health = Apple Health / Health Connect is the daily pool. */
+  stepSource: "health" | "sim";
   gold: number;
   hp: number;
   maxHp: number;

@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BattleScene } from "./components/BattleScene";
 import { GameHud } from "./components/GameHud";
 import { WorldMap } from "./components/WorldMap";
+import { readTodaySteps, todayStepWindow, type StepRead } from "./health/steps";
 import {
   applyFight,
+  applyHealthSteps,
   buySkill,
   claimHunt,
   equipArmor,
@@ -26,12 +28,51 @@ import "./App.css";
 
 export default function App() {
   const [state, setState] = useState<GameState>(() => loadState());
+  const [healthNote, setHealthNote] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const reachable = useMemo(() => getTravelOptions(state), [state]);
   const inBattle = !!(state.selectedSpawnId || state.pendingAmbushSpawnId);
+
+  const applyRead = useCallback((read: StepRead) => {
+    if (read.ok) {
+      const day = todayStepWindow().day;
+      setState((s) => applyHealthSteps(s, read.steps, day));
+      setHealthNote(null);
+      return;
+    }
+    setHealthNote((prev) => (prev === read.reason ? prev : read.reason));
+  }, []);
 
   useEffect(() => {
     saveState(state);
   }, [state]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pull = () => {
+      void readTodaySteps().then((read) => {
+        if (!cancelled) applyRead(read);
+      });
+    };
+    pull();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") pull();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const id = window.setInterval(pull, 60_000);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(id);
+    };
+  }, [applyRead]);
+
+  const onSyncHealth = () => {
+    setSyncing(true);
+    void readTodaySteps()
+      .then(applyRead)
+      .finally(() => setSyncing(false));
+  };
 
   if (inBattle) {
     return (
@@ -70,6 +111,9 @@ export default function App() {
         onGrantSteps={(n) => setState((s) => grantSteps(s, n))}
         onNextDay={() => setState((s) => nextDay(s))}
         onReset={() => setState(resetGame())}
+        healthNote={healthNote}
+        syncing={syncing}
+        onSyncHealth={onSyncHealth}
       />
     </div>
   );

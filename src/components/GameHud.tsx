@@ -30,6 +30,9 @@ interface GameHudProps {
   onGrantSteps: (n: number) => void;
   onNextDay: () => void;
   onReset: () => void;
+  healthNote: string | null;
+  syncing: boolean;
+  onSyncHealth: () => void;
 }
 
 function fmt(n: number) {
@@ -65,7 +68,7 @@ export function GameHud(props: GameHudProps) {
         </div>
         <div className="hud-stats" role="group" aria-label="Status">
           <div className="hud-stat">
-            <span>Steps</span>
+            <span>{state.stepSource === "health" ? "Health" : "Steps"}</span>
             <strong>{fmt(state.stepsRemaining)}</strong>
           </div>
           <div className="hud-stat">
@@ -326,29 +329,49 @@ export function GameHud(props: GameHudProps) {
             )}
 
             {sheet === "menu" && (
-              <div className="sheet__body stack-gap">
-                <p className="muted small">Day {state.day} · demo step sim</p>
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={() => props.onGrantSteps(2000)}
-                >
-                  +2,000 steps
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  onClick={props.onNextDay}
-                >
-                  Next day
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={props.onReset}
-                >
-                  Reset demo
-                </button>
+              <div className="sheet__body">
+                <p className="muted small">
+                  Day {state.day}
+                  {state.stepSource === "health"
+                    ? " · Apple Health"
+                    : " · step simulator"}
+                </p>
+                <p className="muted small" role="status">
+                  {state.stepSource === "health"
+                    ? "Today’s step count is your stamina. Steps already spent stay spent until midnight. Step Quest reads steps only and keeps them on this device."
+                    : (props.healthNote ?? "Checking Apple Health…")}
+                </p>
+                <div className="stack-gap">
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    disabled={props.syncing}
+                    onClick={props.onSyncHealth}
+                  >
+                    {props.syncing ? "Syncing…" : "Sync Apple Health"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={() => props.onGrantSteps(2000)}
+                  >
+                    Dev +2,000 steps
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={props.onNextDay}
+                  >
+                    Next day
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={props.onReset}
+                  >
+                    Reset demo
+                  </button>
+                </div>
                 <ul className="journal-mini">
                   {state.journal.slice(0, 4).map((j, i) => (
                     <li key={`${j.at}-${i}`}>{j.text}</li>

@@ -1,4 +1,4 @@
-# Step Quest — remaining work before Apple Health
+# Step Quest — roadmap
 
 ## Progression today (no XP ladder)
 
@@ -12,26 +12,25 @@ Spend points in **Melee / Archer / Rogue / Mage** (hybrid OK, town respec).
 **Traveler Rank** = `1 + floor(pointsEarned / 3)` (Wayfarer → Trailforged).  
 There is **no XP bar / character level** yet — only skill points + gear + gold.
 
-## What’s left before Health sync
+## Apple Health
 
-### Must-have
-1. **Native shell** — Expo or Capacitor iOS app (HealthKit is not available in Safari/web).
-2. **HealthKit permissions** — read Steps (and optionally distance) for “today”.
-3. **Replace step simulator** — Menu +2k / slider → live `stepsRemaining` / `stepsGranted` from Health.
-4. **Day boundary** — midnight (or Health day) refreshes stamina pool + daily hunt; don’t double-count.
-5. **Background refresh** — pull steps when app opens / resumes.
-6. **Privacy copy** — clear Settings screen: what we read, local-first storage.
+The web game stays the demo. A **Capacitor** iOS shell (`com.stepquest.walk`) reads today’s steps with `@capgo/capacitor-health` and feeds `applyHealthSteps`.
 
-### Should-have
-7. **XP → skill points** (optional) — kills/travel grant XP; every N XP → +1 skill point (true level curve).
-8. **More content** — 2–3 more towns, biome encounters, short campaign end.
-9. **Balance pass** — stamina costs vs typical daily step counts (6k–12k).
-10. **Persist cloud backup** (optional) — iCloud/Game Center later; local is fine for v1.
+| Piece | Status |
+| --- | --- |
+| Read steps, request authorization | Wired (`src/health/steps.ts`) |
+| Stamina = today’s total minus spent | Wired (`applyHealthSteps`) |
+| New local calendar day resets spend | Wired |
+| Sync on open, resume, ~60s, and the Menu button | Wired |
+| Browser keeps Dev +2,000 / Next day | Wired |
+| `ios/` project, HealthKit capability, device run | Needs a Mac + Apple team |
 
-### Nice-to-have (post-Health)
-11. Richer illustrated map art / spine animations  
-12. Sound / haptics on Strike & Block  
-13. Watch complications / Live Activities  
+Expo was the earlier note. Capacitor wraps this Vite UI so the map does not get rewritten in React Native.
 
-## Suggested build order
-`polish web demo` → `Expo scaffold` → `HealthKit read today` → `wire stamina` → `TestFlight`
+## Still open
+
+1. **Device check** — confirm HealthKit totals match the Health app after a real walk.
+2. **Balance** — strike costs vs a typical 6k–12k day.
+3. **More map** — extra towns and a short campaign end.
+4. **Optional XP curve** — kills/travel → skill points on a real level track.
+5. **Polish** — sound, haptics, richer art. Cloud backup is not required for v1.

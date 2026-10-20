@@ -29,8 +29,12 @@ import type {
   ArmorId,
 } from "./types";
 
+function formatLocalDay(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return formatLocalDay(new Date());
 }
 
 function log(state: GameState, text: string): GameState {
@@ -77,6 +81,7 @@ export function createInitialState(seed = Date.now() % 1_000_000): GameState {
     day: todayIso(),
     stepsRemaining: DEFAULT_STEPS,
     stepsGranted: DEFAULT_STEPS,
+    stepSource: "sim",
     gold: 55,
     hp: PLAYER_MAX_HP,
     maxHp: PLAYER_MAX_HP,
@@ -119,6 +124,9 @@ export function loadState(): GameState {
         0,
       );
       parsed.skillPointsEarned = spent + (parsed.skillPoints ?? 0);
+    }
+    if (parsed.stepSource !== "health" && parsed.stepSource !== "sim") {
+      parsed.stepSource = "sim";
     }
     return parsed;
   } catch {
@@ -501,26 +509,77 @@ export function equipArmor(state: GameState, id: ArmorId): GameState {
   return { ...state, armorId: id };
 }
 
-export function nextDay(state: GameState): GameState {
-  const d = new Date(`${state.day}T12:00:00`);
-  d.setDate(d.getDate() + 1);
-  const day = d.toISOString().slice(0, 10);
-  let next: GameState = {
+function rollDay(state: GameState, steps: number, day: string): GameState {
+  const elites = state.spawns.filter((s) => s.elite && s.hp > 0);
+  const next: GameState = {
     ...state,
     day,
-    stepsRemaining: DEFAULT_STEPS,
-    stepsGranted: DEFAULT_STEPS,
+    stepsRemaining: steps,
+    stepsGranted: steps,
     hp: Math.min(state.maxHp, state.hp + 15),
     hunt: state.hunt.claimed ? makeHunt() : state.hunt,
     pendingAmbushSpawnId: null,
     selectedSpawnId: null,
     seed: state.seed + 99,
+    spawns: elites,
   };
-  // Persist elites, refresh trash
-  const elites = state.spawns.filter((s) => s.elite && s.hp > 0);
-  next = { ...next, spawns: elites };
-  next = { ...next, spawns: generateSpawns(next) };
-  return log(next, "A new day. Steps refilled. The map reshuffles lesser foes; elites remember.");
+  return { ...next, spawns: generateSpawns(next) };
+}
+
+export function nextDay(state: GameState): GameState {
+  const d = new Date(`${state.day}T12:00:00`);
+  d.setDate(d.getDate() + 1);
+  const day = formatLocalDay(d);
+  return log(
+    rollDay({ ...state, stepSource: "sim" }, DEFAULT_STEPS, day),
+    "A new day. Steps refilled. The map reshuffles lesser foes; elites remember.",
+  );
+}
+
+/**
+ * Apply a daily step total from Apple Health.
+ * Stamina already spent today is kept; new steps raise the pool.
+ * A new calendar day resets spend and uses that day's total.
+ */
+export function applyHealthSteps(
+  state: GameState,
+  total: number,
+  today: string,
+): GameState {
+  const steps = Math.max(0, Math.floor(total));
+  if (state.day !== today) {
+    return log(
+      { ...rollDay(state, steps, today), stepSource: "health" },
+      `New day. Apple Health: ${steps.toLocaleString()} steps.`,
+    );
+  }
+
+  const spent =
+    state.stepSource === "health"
+      ? Math.max(0, state.stepsGranted - state.stepsRemaining)
+      : 0;
+  const remaining = Math.max(0, steps - Math.min(spent, steps));
+  if (
+    state.stepSource === "health" &&
+    state.stepsGranted === steps &&
+    state.stepsRemaining === remaining
+  ) {
+    return state;
+  }
+
+  const next: GameState = {
+    ...state,
+    stepSource: "health",
+    stepsGranted: steps,
+    stepsRemaining: remaining,
+  };
+  if (state.stepSource !== "health") {
+    return log(
+      next,
+      `Apple Health linked. ${steps.toLocaleString()} steps today — that is your stamina.`,
+    );
+  }
+  return next;
 }
 
 /** Debug / simulator: grant steps without advancing day */
