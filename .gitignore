@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Godot engine binary (not the game)
+/tools/
+
+# DungeonScape / Godot
+dungeonscape/.godot/
+dungeonscape/export/*.apk
+dungeonscape/export/*.exe
+dungeonscape/export/*.zip
+dungeonscape/export/*.x86_64
+dungeonscape/*.translation
