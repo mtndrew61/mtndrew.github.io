@@ -1,1 +1,2 @@
-*.html filter=lfs diff=lfs merge=lfs -text
+# HTML must stay in normal git so Vercel/GitHub Pages previews serve real pages,
+# not Git LFS pointer text.
