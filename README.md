@@ -1,3 +1,10 @@
+# Workspace
+
+- **[DungeonScape](dungeonscape/)** — Godot 4 tick-based dungeon crawler (active development). See `dungeonscape/DESIGN.md`.
+- **Step Quest** (below) — unrelated web demo kept for reference.
+
+---
+
 # Step Quest (web demo)
 
 Explore a legally distinct, Middle-earth–inspired wilderness. **Steps** are your movement budget along scenic path forks — and the damage you spend when you click a monster.
