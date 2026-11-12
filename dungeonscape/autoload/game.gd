@@ -11,9 +11,11 @@ enum Biome {
 
 const TILE_SIZE := 1.0
 const CHUNK_SIZE := 16 ## tiles per chunk edge
-const FLOOR_SIZE_TILES := 128 ## large explore floor for M0
-const CHUNK_LOAD_RADIUS := 2 ## Chebyshev radius around the player chunk
+const FLOOR_SIZE_TILES := 128 ## large explore floor
+const CHUNK_LOAD_RADIUS := 2 ## Chebyshev radius to load
+const CHUNK_UNLOAD_RADIUS := 3 ## hysteresis: unload farther out
 const LOOT_DESPAWN_SECONDS := 180.0
+const LOOT_WARN_SECONDS := 30.0
 
 const BIOME_COLORS := {
 	Biome.STONE: Color("6b6e76"),
@@ -42,6 +44,7 @@ const SKILL_NAMES := [
 
 var current_floor: int = 1
 var last_action: String = "—"
+var bag: Array[String] = [] ## simple pickup bag until real inventory (M3)
 
 
 func biome_name(biome: Biome) -> String:
@@ -54,3 +57,11 @@ func biome_color(biome: Biome) -> Color:
 
 func set_action(text: String) -> void:
 	last_action = text
+
+
+func add_to_bag(item_name: String) -> void:
+	bag.append(item_name)
+
+
+func clear_bag() -> void:
+	bag.clear()

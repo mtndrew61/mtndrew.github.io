@@ -1,6 +1,6 @@
 extends Node3D
 class_name ChunkWorld
-## Large floor with chunk streaming — only nearby chunks are instantiated.
+## Large floor with hysteretic chunk streaming — load near, unload farther to avoid thrash.
 
 signal chunk_stream_changed(loaded_count: int)
 
@@ -12,10 +12,16 @@ var _player_chunk: Vector2i = Vector2i(9999, 9999)
 
 
 func _ready() -> void:
+	rebuild_floor(floor_index)
+
+
+func rebuild_floor(p_floor: int) -> void:
+	floor_index = p_floor
+	for key in _chunks.keys():
+		_unload_chunk(key)
+	_chunks.clear()
+	_player_chunk = Vector2i(9999, 9999)
 	biome_map = BiomeMap.new(floor_index * 1009 + 7, Game.FLOOR_SIZE_TILES)
-	# Spawn near center of floor.
-	var mid := Game.FLOOR_SIZE_TILES / 2
-	_ensure_spawn_walkable(mid, mid)
 
 
 func world_to_tile(world_pos: Vector3) -> Vector2i:
@@ -48,26 +54,36 @@ func biome_at_tile(tile: Vector2i) -> Game.Biome:
 	return biome_map.biome_at(tile.x, tile.y)
 
 
+func stairs_tile() -> Vector2i:
+	return biome_map.stairs_tile
+
+
 func update_streaming(player_tile: Vector2i) -> void:
 	var center := tile_chunk(player_tile)
-	if center == _player_chunk and not _chunks.is_empty():
-		return
+	var same_chunk := center == _player_chunk
 	_player_chunk = center
-	var needed: Dictionary = {}
-	for cz in range(center.y - Game.CHUNK_LOAD_RADIUS, center.y + Game.CHUNK_LOAD_RADIUS + 1):
-		for cx in range(center.x - Game.CHUNK_LOAD_RADIUS, center.x + Game.CHUNK_LOAD_RADIUS + 1):
+
+	var load_r := Game.CHUNK_LOAD_RADIUS
+	var unload_r := Game.CHUNK_UNLOAD_RADIUS
+
+	# Load anything in load radius.
+	for cz in range(center.y - load_r, center.y + load_r + 1):
+		for cx in range(center.x - load_r, center.x + load_r + 1):
 			var key := Vector2i(cx, cz)
-			if _chunk_in_floor(key):
-				needed[key] = true
-				if not _chunks.has(key):
-					_load_chunk(key)
+			if _chunk_in_floor(key) and not _chunks.has(key):
+				_load_chunk(key)
+
+	# Unload outside unload radius (hysteresis).
 	var to_remove: Array[Vector2i] = []
 	for key in _chunks.keys():
-		if not needed.has(key):
+		var d: int = maxi(absi(key.x - center.x), absi(key.y - center.y))
+		if d > unload_r:
 			to_remove.append(key)
 	for key in to_remove:
 		_unload_chunk(key)
-	chunk_stream_changed.emit(_chunks.size())
+
+	if not same_chunk or not to_remove.is_empty():
+		chunk_stream_changed.emit(_chunks.size())
 
 
 func loaded_chunk_count() -> int:
@@ -91,14 +107,3 @@ func _unload_chunk(coord: Vector2i) -> void:
 	if chunk:
 		chunk.queue_free()
 	_chunks.erase(coord)
-
-
-func _ensure_spawn_walkable(tx: int, tz: int) -> void:
-	# BiomeMap pillars are sparse; center is almost always fine. Nudge if not.
-	if is_walkable(Vector2i(tx, tz)):
-		return
-	for r in range(1, 12):
-		for oz in range(-r, r + 1):
-			for ox in range(-r, r + 1):
-				if is_walkable(Vector2i(tx + ox, tz + oz)):
-					return

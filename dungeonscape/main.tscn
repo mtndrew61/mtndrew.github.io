@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://bmaindungeonscape"]
+[gd_scene load_steps=7 format=3 uid="uid://bmaindungeonscape"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_main"]
 [ext_resource type="Script" path="res://world/chunk_world.gd" id="2_world"]
 [ext_resource type="Script" path="res://player/player.gd" id="3_player"]
 [ext_resource type="Script" path="res://camera/game_camera.gd" id="4_cam"]
 [ext_resource type="Script" path="res://ui/debug_hud.gd" id="5_hud"]
+[ext_resource type="Script" path="res://world/loot_manager.gd" id="6_loot"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
@@ -13,7 +14,8 @@ script = ExtResource("1_main")
 script = ExtResource("2_world")
 floor_index = 1
 
-[node name="Items" type="Node3D" parent="."]
+[node name="LootManager" type="Node3D" parent="."]
+script = ExtResource("6_loot")
 
 [node name="Player" type="Node3D" parent="."]
 script = ExtResource("3_player")

@@ -17,16 +17,18 @@ godot --path /path/to/dungeonscape
 
 Or open the `dungeonscape/` folder in the Godot editor and press Play.
 
-## M0 controls
+## Controls (M1)
 
 | Action | Keyboard | Gamepad |
 |--------|----------|---------|
 | Move (8-way) | WASD / arrows | Left stick |
 | Camera pan | Middle mouse drag | Right stick |
-| Attack (stub) | Space | A / South |
-| Interact (stub) | E | B / East |
-| Inventory (stub) | I | Y / North |
+| Attack (stub → M2) | Space | A / South |
+| Interact (loot / stairs) | E | B / East |
+| Bag | I | Y / North |
 | Menu (stub) | Esc | Start |
+
+Stand on glowing **stairs** and press Interact to descend to the next floor. Ground loot shows a countdown and turns red under 30s; it despawns at 180s by default.
 
 ## Export
 
