@@ -27,8 +27,8 @@ Agility, Thieving, Slayer
 
 | ID | Goal |
 |----|------|
-| M0 | Skeleton: tick, 8-way, chunks, camera, input, HUD, exports |
-| M1 | Large floor + multi-biome + loot despawn polish |
+| M0 | Skeleton: tick, 8-way, chunks, camera, input, HUD, exports ✅ |
+| M1 | Carved multi-biome rooms, MultiMesh chunks, loot pickup/despawn, stairs ✅ |
 | M2 | Melee combat + early mobs |
 | M3 | Ranged/Magic, inventory, gear |
 | M4 | Skill sheet + first skilling loops |
